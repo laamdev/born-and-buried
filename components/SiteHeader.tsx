@@ -38,7 +38,7 @@ export function SiteHeader() {
             </SignInButton>
           </Unauthenticated>
           <Authenticated>
-            <UserButton afterSignOutUrl="/" />
+            <UserButton />
           </Authenticated>
         </div>
       </div>
