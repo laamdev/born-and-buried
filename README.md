@@ -87,4 +87,4 @@ screen, and the same session's score is saved.
 ## Adding more figures
 
 Append entries to `convex/seedData.ts`, then re-run `npx convex run seed:run`
-(insertion is idempotent on `slug`).
+(insertion is idempotent on `slug`)
