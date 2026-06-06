@@ -1,36 +1,90 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Born & Buried
 
-## Getting Started
+A historical-figure guessing game. You see a world map with two pins — where a
+figure was **born** and where they **died**, each labeled with a year — and you
+guess **who** it is from a searchable combobox. 10 rounds, 3 strikes, one guess
+per round, with a per-round timer and time bonus.
 
-First, run the development server:
+**Stack:** Next.js (App Router) · Convex · Clerk · shadcn/ui on Base UI ·
+MapLibre GL via `react-map-gl` (free OpenFreeMap tiles, no key).
+
+The current round's answer **never reaches the client**: Convex stores the
+ordered answer list server-side and only sends sanitized round data (two
+coordinates + years + category). Guesses are checked server-authoritatively.
+
+---
+
+## Setup (one-time)
+
+You need a free [Convex](https://convex.dev) account and a free
+[Clerk](https://clerk.com) account.
+
+### 1. Convex
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npx convex dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+First run is interactive: log in (or pick "try Convex locally without an
+account"), then create/choose a project. This generates `convex/_generated/`,
+pushes the schema + functions, and writes `CONVEX_DEPLOYMENT` +
+`NEXT_PUBLIC_CONVEX_URL` into `.env.local`. **Leave this running** (it watches
+backend files and keeps the dev deployment in sync).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 2. Clerk + Convex JWT
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Create a Clerk application at <https://dashboard.clerk.com/apps/new>.
+2. Activate the **Convex** integration at
+   <https://dashboard.clerk.com/apps/setup/convex> (this creates the JWT
+   template named `convex`). Copy the **Frontend API URL** shown there.
+3. Copy your keys from <https://dashboard.clerk.com/last-active?path=api-keys>.
+4. Fill `.env.local`:
+   ```
+   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+   CLERK_SECRET_KEY=sk_test_...
+   CLERK_JWT_ISSUER_DOMAIN=https://your-frontend-api.clerk.accounts.dev
+   ```
+5. Tell the Convex backend the issuer (it reads this, not `.env.local`):
+   ```bash
+   npx convex env set CLERK_JWT_ISSUER_DOMAIN https://your-frontend-api.clerk.accounts.dev
+   ```
 
-## Learn More
+### 3. Seed the figures (~19 across categories)
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npx convex run seed:run
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 4. Run the app
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+In a second terminal (keep `npx convex dev` running in the first):
 
-## Deploy on Vercel
+```bash
+pnpm dev
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Open <http://localhost:3000>.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## How it works
+
+- `convex/schema.ts` — `figures`, `users`, `gameSessions`, `scores` (+ indexes).
+- `convex/games.ts` — `startGame`, `getCurrentRound` (sanitized), `submitGuess`
+  and `submitTimeout` (server computes elapsed time from `roundStartedAt`, so a
+  spoofed client clock can't earn a bigger bonus or dodge a timeout).
+- `convex/figures.ts` — `listForCombobox` returns only names/aliases/ranking,
+  **never geography or years**.
+- `convex/leaderboard.ts` — `submitScore` is auth-gated
+  (`ctx.auth.getUserIdentity()`) and idempotent; `topScores` / `myHistory`.
+- `convex/scoring.ts` — base 1000 + time bonus `(remaining/roundSeconds)*500` +
+  streak multiplier (+10%/consecutive, capped at +100%).
+
+Guest play is fully supported; signing in (Clerk) is required only to save a
+score to the leaderboard. A guest can finish a game, then sign in from the end
+screen, and the same session's score is saved.
+
+## Adding more figures
+
+Append entries to `convex/seedData.ts`, then re-run `npx convex run seed:run`
+(insertion is idempotent on `slug`).
