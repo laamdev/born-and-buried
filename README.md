@@ -22,7 +22,7 @@ You need a free [Convex](https://convex.dev) account and a free
 ### 1. Convex
 
 ```bash
-pnpx convex dev
+npx convex dev
 ```
 
 First run is interactive: log in (or pick "try Convex locally without an
@@ -46,18 +46,18 @@ backend files and keeps the dev deployment in sync).
    ```
 5. Tell the Convex backend the issuer (it reads this, not `.env.local`):
    ```bash
-   pnpx convex env set CLERK_JWT_ISSUER_DOMAIN https://your-frontend-api.clerk.accounts.dev
+   npx convex env set CLERK_JWT_ISSUER_DOMAIN https://your-frontend-api.clerk.accounts.dev
    ```
 
 ### 3. Seed the figures (~19 across categories)
 
 ```bash
-pnpx convex run seed:run
+npx convex run seed:run
 ```
 
 ### 4. Run the app
 
-In a second terminal (keep `pnpx convex dev` running in the first):
+In a second terminal (keep `npx convex dev` running in the first):
 
 ```bash
 pnpm dev
@@ -86,5 +86,5 @@ screen, and the same session's score is saved.
 
 ## Adding more figures
 
-Append entries to `convex/seedData.ts`, then re-run `pnpx convex run seed:run`
+Append entries to `convex/seedData.ts`, then re-run `npx convex run seed:run`
 (insertion is idempotent on `slug`).
