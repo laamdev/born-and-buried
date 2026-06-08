@@ -133,6 +133,15 @@ export function GameClient({ sessionId }: { sessionId: string }) {
           streak={data.streak}
         />
 
+        {!reveal && data.round ? (
+          <RoundTimer
+            roundStartedAt={data.roundStartedAt}
+            roundSeconds={data.roundSeconds}
+            active={data.status === "active"}
+            onExpire={handleTimeout}
+          />
+        ) : null}
+
         {reveal ? (
           <RevealCard
             reveal={reveal.reveal}
@@ -148,12 +157,6 @@ export function GameClient({ sessionId }: { sessionId: string }) {
               Two places, two years —{" "}
               <span className="text-foreground">who lived this life?</span> One guess.
             </p>
-            <RoundTimer
-              roundStartedAt={data.roundStartedAt}
-              roundSeconds={data.roundSeconds}
-              active={!reveal && data.status === "active"}
-              onExpire={handleTimeout}
-            />
             <GuessCombobox
               figures={figures ?? []}
               disabled={busy || figures === undefined}

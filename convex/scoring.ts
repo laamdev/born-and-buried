@@ -4,7 +4,7 @@
 
 export const TOTAL_ROUNDS = 10;
 export const MAX_STRIKES = 3;
-export const ROUND_SECONDS = 30;
+export const ROUND_SECONDS = 45;
 
 export const BASE_POINTS = 1000;
 export const TIME_BONUS_MAX = 500;
